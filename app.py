@@ -80,7 +80,7 @@ if len(st.session_state.user_guesses) < (max_guesses):
         # Clear the input field after submission
         st.session_state.my_guess = ""
 else:
-    st.write("Game Over! You've reached the maximum number of guesses.")
+    st.write(f"Game Over! You've reached the maximum number of guesses. We were looking for the word: {st.session_state.secret_word}")
 
 # Display the table of user guesses
 if st.session_state.user_guesses:
