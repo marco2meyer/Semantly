@@ -61,13 +61,15 @@ st.write("### Preset guesses:")
 st.table(preset_guesses_scores)
 
 # Check if the user has remaining guesses
-if len(st.session_state.user_guesses) < max_guesses:
+if len(st.session_state.user_guesses) < (max_guesses):
     # User input for guessing with submit functionality
     st.text_input("Enter your guess:", key="widget", on_change=submit)
 
     guess = st.session_state.my_guess
 
     if guess:
+        st.write("### Number of guesses remaining:")
+        st.write(max_guesses - len(st.session_state.user_guesses) - 1)
         score = similarity(guess, st.session_state.secret_word)
         add_user_guess(guess, score)
 
