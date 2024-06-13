@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from semantly import similarity
 
-st.title('Semantle Clone')
+st.title('Semantly')
 
 # Explanation text
 st.write("""
