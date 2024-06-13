@@ -1,0 +1,4 @@
+version,secret_word,preset_guesses,max_guesses
+1,panda,"apple,banana,penguin",10
+2,dog,"cat,hamster,rabbit",10
+3,house,"building,cottage,shack",10
