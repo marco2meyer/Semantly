@@ -7,14 +7,14 @@ st.title('Semantly')
 # Explanation text
 st.write("""
 ### How to Play
-Welcome to Semantle Clone! Your goal is to guess the secret word. To help you get started, we’ve given you a few hints.
+Your goal is to guess the secret word.
 
 **How It Works:**
 - Each guess you make will receive a score showing how close it is to the secret word. 
 - The score is shown as a percentage. The higher the percentage, the closer your guess is to the secret word.
-- Use the preset guesses as hints to guide your guesses.
+- Use the hints to guide your guesses.
 
-**Good Luck!** Try to find the secret word with as few guesses as possible.
+**Good Luck!**
 """)
 
 # Read game configurations from CSV
@@ -57,7 +57,7 @@ def submit():
     st.session_state.widget = ""
 
 # Display the table of preset guesses
-st.write("### Preset guesses:")
+st.write("### Hints:")
 st.table(preset_guesses_scores)
 
 # Check if the user has remaining guesses
