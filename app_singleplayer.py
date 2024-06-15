@@ -2,19 +2,19 @@ import streamlit as st
 import pandas as pd
 from semantly import similarity
 
-st.title('Semantle Clone')
+st.title('Semantly')
 
 # Explanation text
 st.write("""
 ### How to Play
-Welcome to Semantle Clone! Your goal is to guess the secret word. To help you get started, we’ve given you a few hints.
+Your goal is to guess the secret word.
 
 **How It Works:**
 - Each guess you make will receive a score showing how close it is to the secret word. 
 - The score is shown as a percentage. The higher the percentage, the closer your guess is to the secret word.
-- Use the preset guesses as hints to guide your guesses.
+- Use the hints to guide your guesses.
 
-**Good Luck!** Try to find the secret word with as few guesses as possible.
+**Good Luck!**
 """)
 
 # Read game configurations from CSV
@@ -57,7 +57,7 @@ def submit():
     st.session_state.widget = ""
 
 # Display the table of preset guesses
-st.write("### Preset guesses:")
+st.write("### Hints:")
 st.table(preset_guesses_scores)
 
 # Check if the user has remaining guesses
@@ -80,7 +80,8 @@ if len(st.session_state.user_guesses) < (max_guesses):
         # Clear the input field after submission
         st.session_state.my_guess = ""
 else:
-    st.write("Game Over! You've reached the maximum number of guesses.")
+    st.write("Game Over! You've reached the maximum number of guesses.") 
+    st.write(f"We were looking for the word: {st.session_state.secret_word}")
 
 # Display the table of user guesses
 if st.session_state.user_guesses:

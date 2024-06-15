@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from semantly import similarity
+import requests
 
 st.title('Semantly')
 
@@ -17,20 +17,30 @@ Your goal is to guess the secret word.
 **Good Luck!**
 """)
 
-# Read game configurations from CSV
-game_configurations = pd.read_csv('game_configurations.csv')
-
 # Get URL parameters
 query_params = st.query_params
-version = query_params.get('version', [1])[0]
+game_code = query_params.get('code', [None])[0]
+player_name = query_params.get('player', [None])[0]
 
-# Set default line to read from the CSV
-config = game_configurations[game_configurations['version'] == int(version)].iloc[0]
+# API settings
+api_url = "https://semantlyapi-352e1ba2b5fd.herokuapp.com"
+api_key = st.secrets["api_key"]
+headers = {"x-api-key": api_key}
 
-# Extract game configuration
-secret_word = config['secret_word']
-preset_guesses = config['preset_guesses'].split(',')
-max_guesses = int(config['max_guesses'])
+if not game_code or not player_name:
+    st.error("Game code and player name must be provided as URL parameters.")
+    st.stop()
+
+# Fetch game configuration from the API
+response = requests.get(f"{api_url}/game/{game_code}", headers=headers)
+if response.status_code != 200:
+    st.error("Error fetching game configuration.")
+    st.stop()
+
+game_config = response.json()
+secret_word = game_config['secret_word']
+preset_guesses = game_config['preset_guesses']
+max_guesses = game_config['max_guesses']
 
 # Initialize the session state for guesses and the secret word
 if 'user_guesses' not in st.session_state:
@@ -39,13 +49,14 @@ if 'user_guesses' not in st.session_state:
 if 'secret_word' not in st.session_state:
     st.session_state.secret_word = secret_word
 
-# Preset initial guesses
-preset_guesses_scores = [{'Guess': word, 'Similarity': f"{round(similarity(word, st.session_state.secret_word) * 100, 0):.0f}%"} for word in preset_guesses]
-preset_guesses_scores = sorted(preset_guesses_scores, key=lambda x: float(x['Similarity'][:-1]), reverse=True)
+# Fetch current user guesses
+response = requests.get(f"{api_url}/game/{game_code}/guesses", headers=headers)
+if response.status_code == 200:
+    st.session_state.user_guesses = response.json()["user_guesses"]
 
 # Function to add a user guess
 def add_user_guess(guess, score):
-    st.session_state.user_guesses.append({'Guess': guess, 'Similarity': f"{round(score * 100, 0):.0f}%"})
+    st.session_state.user_guesses.append({'player': player_name, 'Guess': guess, 'Similarity': f"{round(score, 0):.0f}%"})
     st.session_state.user_guesses = sorted(st.session_state.user_guesses, key=lambda x: float(x['Similarity'][:-1]), reverse=True)
 
 # Manage the state of the text input field
@@ -58,32 +69,44 @@ def submit():
 
 # Display the table of preset guesses
 st.write("### Hints:")
-st.table(preset_guesses_scores)
+st.table(preset_guesses)
+
+# Display the table of user guesses
+st.write("### All Guesses:")
+st.table(st.session_state.user_guesses)
+
+# Check remaining guesses for each player
+player_guess_count = {guess['player']: 0 for guess in st.session_state.user_guesses}
+for guess in st.session_state.user_guesses:
+    player_guess_count[guess['player']] += 1
+
+remaining_guesses = {player: max_guesses - count for player, count in player_guess_count.items()}
+
+st.write("### Remaining Guesses:")
+st.table(pd.DataFrame(remaining_guesses.items(), columns=['Player', 'Remaining Guesses']))
 
 # Check if the user has remaining guesses
-if len(st.session_state.user_guesses) < (max_guesses):
+if player_name not in remaining_guesses or remaining_guesses[player_name] <= 0:
+    st.write("You have no guesses left.")
+elif all(count <= 0 for count in remaining_guesses.values()):
+    st.write("Game Over! All players have used their guesses.")
+else:
     # User input for guessing with submit functionality
     st.text_input("Enter your guess:", key="widget", on_change=submit)
 
     guess = st.session_state.my_guess
 
     if guess:
-        st.write("### Number of guesses remaining:")
-        st.write(max_guesses - len(st.session_state.user_guesses) - 1)
-        score = similarity(guess, st.session_state.secret_word)
-        add_user_guess(guess, score)
+        response = requests.post(f"{api_url}/game/{game_code}/guess", json={"player": player_name, "guess": guess}, headers=headers)
+        if response.status_code == 200:
+            score = response.json()["game"]["user_guesses"][-1]["score"]
+            add_user_guess(guess, score)
 
-        if score > 0.95:  # Set a threshold for winning
-            st.write("🎉 You found the secret word!")
-            st.stop()
+            if float(score) > 95.0:  # Set a threshold for winning
+                st.write("🎉 You found the secret word!")
+                st.stop()
 
-        # Clear the input field after submission
-        st.session_state.my_guess = ""
-else:
-    st.write("Game Over! You've reached the maximum number of guesses.") 
-    st.write(f"We were looking for the word: {st.session_state.secret_word}")
-
-# Display the table of user guesses
-if st.session_state.user_guesses:
-    st.write("### Your guesses:")
-    st.table(st.session_state.user_guesses)
+            # Clear the input field after submission
+            st.session_state.my_guess = ""
+        else:
+            st.write("Error adding guess. Please try again.")
