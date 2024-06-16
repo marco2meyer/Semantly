@@ -78,8 +78,8 @@ st.table(preset_guesses)
 st.write("### All Guesses:")
 st.table(st.session_state.user_guesses)
 
-# Check remaining guesses for each player
-player_guess_count = {guess['player']: 0 for guess in st.session_state.user_guesses}
+# Ensure all players have the maximum number of guesses by default
+player_guess_count = {player: 0 for player in game_config['players']}
 for guess in st.session_state.user_guesses:
     player_guess_count[guess['player']] += 1
 
