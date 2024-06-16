@@ -60,7 +60,7 @@ if response.status_code == 200:
 # Function to add a user guess
 def add_user_guess(guess, score):
     st.session_state.user_guesses.append({'player': player_name, 'Guess': guess, 'score': f"{round(score, 0):.0f}%"})
-    st.session_state.user_guesses = sorted(st.session_state.user_guesses, key=lambda x: float(x['Similarity'][:-1]), reverse=True)
+    st.session_state.user_guesses = sorted(st.session_state.user_guesses, key=lambda x: float(x['score'][:-1]), reverse=True)
 
 # Manage the state of the text input field
 if 'my_guess' not in st.session_state:
