@@ -62,6 +62,8 @@ def add_user_guess(guess, score):
     st.session_state.user_guesses.append({'player': player_name, 'Guess': guess, 'score': score})
     st.session_state.user_guesses = sorted(st.session_state.user_guesses, key=lambda x: float(x['score']), reverse=True)
 
+st.write("Made it here!")
+
 # WebSocket listener
 async def listen_for_updates():
     async with websockets.connect(f"wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/{game_code}") as websocket:
