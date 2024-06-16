@@ -71,6 +71,7 @@ async def listen_for_updates():
             message = await websocket.recv()
             game_data = json.loads(message)
             st.session_state.user_guesses = game_data['user_guesses']
+            st.write("Hi!")
             st.experimental_rerun()
 
 # Start WebSocket listener in a separate thread
