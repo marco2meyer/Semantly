@@ -38,6 +38,7 @@ if response.status_code != 200:
     st.stop()
 
 game_config = response.json()
+st.write(game_config)
 secret_word = game_config['secret_word']
 preset_guesses = game_config['preset_guesses']
 max_guesses = game_config['max_guesses']
