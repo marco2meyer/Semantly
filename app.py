@@ -36,7 +36,7 @@ response = requests.get(f"{api_url}/game/{game_code}", headers=headers)
 if response.status_code != 200:
     st.error("Error fetching game configuration.")
     st.stop()
-
+st.write(f"{api_url}/game/{game_code}", headers=headers)
 game_config = response.json()
 st.write(game_config)
 secret_word = game_config['secret_word']
