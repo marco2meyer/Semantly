@@ -68,6 +68,7 @@ def add_user_guess(guess, score):
 async def listen_for_updates():
     async with websockets.connect(f"wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/{game_code}") as websocket:
         while True:
+            st.write("Started!")
             message = await websocket.recv()
             game_data = json.loads(message)
             st.session_state.user_guesses = game_data['user_guesses']
