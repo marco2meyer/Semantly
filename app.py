@@ -4,6 +4,7 @@ import pandas as pd
 import requests
 import websockets
 import asyncio
+import threading
 
 st.title('Semantly')
 
@@ -63,8 +64,6 @@ def add_user_guess(guess, score):
     st.session_state.user_guesses.append({'player': player_name, 'Guess': guess, 'score': score})
     st.session_state.user_guesses = sorted(st.session_state.user_guesses, key=lambda x: float(x['score']), reverse=True)
 
-st.write("Made it here!")
-
 # WebSocket listener
 async def listen_for_updates():
     async with websockets.connect(f"wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/{game_code}") as websocket:
@@ -74,11 +73,9 @@ async def listen_for_updates():
             st.session_state.user_guesses = game_data['user_guesses']
             st.experimental_rerun()
 
-st.write("Made it here! 2")
-
-
 # Start WebSocket listener in a separate thread
-asyncio.run(listen_for_updates())
+thread = threading.Thread(target=listen_for_updates)
+thread.start()
 
 st.write("Made it here! 3")
 
