@@ -100,6 +100,7 @@ else:
     if guess:
         response = requests.post(f"{api_url}/game/{game_code}/guess", json={"player": player_name, "guess": guess}, headers=headers)
         if response.status_code == 200:
+            st.write(response.json())
             score = response.json()["game"]["user_guesses"]["score"]
             add_user_guess(guess, score)
 
