@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import requests
+import websockets
+import asyncio
 
 st.title('Semantly')
 
@@ -59,6 +61,19 @@ if response.status_code == 200:
 def add_user_guess(guess, score):
     st.session_state.user_guesses.append({'player': player_name, 'Guess': guess, 'score': score})
     st.session_state.user_guesses = sorted(st.session_state.user_guesses, key=lambda x: float(x['score']), reverse=True)
+
+# WebSocket listener
+async def listen_for_updates():
+    async with websockets.connect(f"wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/{game_code}") as websocket:
+        while True:
+            message = await websocket.recv()
+            game_data = json.loads(message)
+            st.session_state.user_guesses = game_data['user_guesses']
+            st.experimental_rerun()
+
+# Start WebSocket listener in a separate thread
+asyncio.run(listen_for_updates())
+
 
 # Manage the state of the text input field
 if 'my_guess' not in st.session_state:
