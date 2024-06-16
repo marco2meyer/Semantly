@@ -66,6 +66,8 @@ def add_user_guess(guess, score):
 
 # WebSocket listener
 async def listen_for_updates():
+    st.write("Begun!")
+    
     async with websockets.connect(f"wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/{game_code}") as websocket:
         while True:
             st.write("Started!")
