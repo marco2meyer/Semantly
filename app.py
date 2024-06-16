@@ -77,10 +77,12 @@ def listen_for_updates():
             async with websockets.connect(f"wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/{game_code}") as websocket:
                 logger.info("WebSocket connection established.")
                 while True:
+                    st.write("Made it to waiting for data!")
                     message = await websocket.recv()
                     logger.info(f"Received message: {message}")
                     game_data = json.loads(message)
                     st.session_state.user_guesses = game_data['user_guesses']
+                    st.write("Made it to the rerun!")
                     st.experimental_rerun()
         except Exception as e:
             logger.error(f"Error in WebSocket connection: {e}")
