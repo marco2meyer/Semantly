@@ -5,6 +5,11 @@ import requests
 import websockets
 import asyncio
 import threading
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 st.title('Semantly')
 
@@ -65,17 +70,21 @@ def add_user_guess(guess, score):
     st.session_state.user_guesses = sorted(st.session_state.user_guesses, key=lambda x: float(x['score']), reverse=True)
 
 # WebSocket listener
-async def listen_for_updates():
-    st.write("Begun!")
-    
-    async with websockets.connect(f"wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/{game_code}") as websocket:
-        while True:
-            st.write("Started!")
-            message = await websocket.recv()
-            game_data = json.loads(message)
-            st.session_state.user_guesses = game_data['user_guesses']
-            st.write("Hi!")
-            st.experimental_rerun()
+def listen_for_updates():
+    logger.info("Starting WebSocket listener thread.")
+    async def websocket_listener():
+        try:
+            async with websockets.connect(f"wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/{game_code}") as websocket:
+                logger.info("WebSocket connection established.")
+                while True:
+                    message = await websocket.recv()
+                    logger.info(f"Received message: {message}")
+                    game_data = json.loads(message)
+                    st.session_state.user_guesses = game_data['user_guesses']
+                    st.experimental_rerun()
+        except Exception as e:
+            logger.error(f"Error in WebSocket connection: {e}")
+    asyncio.run(websocket_listener())
 
 # Start WebSocket listener in a separate thread
 thread = threading.Thread(target=listen_for_updates)
