@@ -22,8 +22,6 @@ query_params = st.query_params
 game_code = query_params.get('code', [None])
 player_name = query_params.get('player', [None])
 
-st.write(game_code, player_name)
-
 # API settings
 api_url = "https://semantlyapi-352e1ba2b5fd.herokuapp.com"
 api_key = st.secrets["api_key"]
@@ -38,9 +36,9 @@ response = requests.get(f"{api_url}/game/{game_code}", headers=headers)
 if response.status_code != 200:
     st.error("Error fetching game configuration.")
     st.stop()
-st.write(f"{api_url}/game/{game_code}", headers=headers)
+
 game_config = response.json()
-st.write(game_config)
+
 secret_word = game_config['secret_word']
 preset_guesses = game_config['preset_guesses']
 max_guesses = game_config['max_guesses']
@@ -60,7 +58,7 @@ if response.status_code == 200:
 # Function to add a user guess
 def add_user_guess(guess, score):
     st.session_state.user_guesses.append({'player': player_name, 'Guess': guess, 'score': f"{round(score, 0):.0f}%"})
-    st.session_state.user_guesses = sorted(st.session_state.user_guesses, key=lambda x: float(x['score'][:-1]), reverse=True)
+    st.session_state.user_guesses = sorted(st.session_state.user_guesses, key=lambda x: float(x['score']), reverse=True)
 
 # Manage the state of the text input field
 if 'my_guess' not in st.session_state:
@@ -102,7 +100,7 @@ else:
     if guess:
         response = requests.post(f"{api_url}/game/{game_code}/guess", json={"player": player_name, "guess": guess}, headers=headers)
         if response.status_code == 200:
-            score = response.json()["game"]["user_guesses"][-1]["score"]
+            score = response.json()["game"]["user_guesses"]["score"]
             add_user_guess(guess, score)
 
             if float(score) > 95.0:  # Set a threshold for winning
