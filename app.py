@@ -101,7 +101,8 @@ else:
         response = requests.post(f"{api_url}/game/{game_code}/guess", json={"player": player_name, "guess": guess}, headers=headers)
         if response.status_code == 200:
             st.write(response.json())
-            score = response.json()["game"]["user_guesses"]["score"]
+            #score = response.json()["game"]["user_guesses"]["score"]
+            score = 0.55
             add_user_guess(guess, score)
 
             if float(score) > 95.0:  # Set a threshold for winning
