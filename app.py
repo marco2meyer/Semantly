@@ -74,9 +74,13 @@ async def listen_for_updates():
             st.session_state.user_guesses = game_data['user_guesses']
             st.experimental_rerun()
 
+st.write("Made it here! 2")
+
+
 # Start WebSocket listener in a separate thread
 asyncio.run(listen_for_updates())
 
+st.write("Made it here! 3")
 
 # Manage the state of the text input field
 if 'my_guess' not in st.session_state:
