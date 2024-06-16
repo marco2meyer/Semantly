@@ -22,6 +22,8 @@ query_params = st.query_params
 game_code = query_params.get('code', [None])[0]
 player_name = query_params.get('player', [None])[0]
 
+st.write(game_code, player_name)
+
 # API settings
 api_url = "https://semantlyapi-352e1ba2b5fd.herokuapp.com"
 api_key = st.secrets["api_key"]
