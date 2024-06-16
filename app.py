@@ -19,8 +19,8 @@ Your goal is to guess the secret word.
 
 # Get URL parameters
 query_params = st.query_params
-game_code = query_params.get('code', [None])[0]
-player_name = query_params.get('player', [None])[0]
+game_code = query_params.get('code', [None])
+player_name = query_params.get('player', [None])
 
 st.write(game_code, player_name)
 
