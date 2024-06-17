@@ -1,55 +1,51 @@
-import websocket
+import asyncio
+import websockets
 import json
-import threading
 import ssl
-import time
+import requests
+import threading
 
-# URL of the deployed FastAPI WebSocket on Heroku
-ws_url = "wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/testgame5"
+# WebSocket URL and API settings
+websocket_url = "wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/testgame5"
+api_url = "https://semantlyapi-352e1ba2b5fd.herokuapp.com"
+api_key = "my_semantly_api_password"
 
-def on_message(ws, message):
-    print(f"Received message: {message}")
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
-def on_error(ws, error):
-    print(f"Error: {error}")
-
-def on_close(ws, close_status_code, close_msg):
-    print("WebSocket closed")
-    print(f"Close status code: {close_status_code}")
-    print(f"Close message: {close_msg}")
-
-def on_open(ws):
-    def run(*args):
-        api_key = "my_semantly_api_password"  # Replace with your actual API password
-        auth_data = {
-            "x-api-key": api_key
-        }
-        
-        # Sending the authentication header
-        ws.send(json.dumps(auth_data))
+# Function to handle WebSocket communication
+async def websocket_handler():
+    async with websockets.connect(websocket_url, ssl=ssl_context) as websocket:
+        # Authenticate via WebSocket
+        auth_data = {"x-api-key": api_key}
+        await websocket.send(json.dumps(auth_data))
         print("Sent authentication data")
-        
-        # Sending a guess to the game
-        guess_data = {
-            "player": "player1",
-            "guess": "testguess"
-        }
-        ws.send(json.dumps(guess_data))
-        print("Sent guess data")
-        
-        time.sleep(5)  # Wait to see if any messages are received
-        ws.close()
-        print("WebSocket connection closed")
 
-    thread = threading.Thread(target=run)
-    thread.start()
+        try:
+            while True:
+                message = await websocket.recv()
+                print(f"Received message: {message}")
+        except websockets.ConnectionClosed:
+            print("WebSocket connection closed")
 
-# Create a WebSocket app with SSL certificate verification disabled
-ws = websocket.WebSocketApp(ws_url,
-                            on_open=on_open,
-                            on_message=on_message,
-                            on_error=on_error,
-                            on_close=on_close)
+# Function to send a guess via HTTP POST request
+def send_guess():
+    guess_data = {"player": "player1", "guess": "testguess"}
+    headers = {"x-api-key": api_key}
+    response = requests.post(f"{api_url}/game/testgame5/guess", json=guess_data, headers=headers)
+    if response.status_code == 200:
+        print("Guess added successfully2")
+    else:
+        print(f"Error adding guess: {response.status_code}")
 
-# Run the WebSocket app with SSL certificate verification disabled
-ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+# Run the WebSocket handler in a separate thread
+threading.Thread(target=asyncio.run, args=(websocket_handler(),)).start()
+
+# Wait a bit to ensure WebSocket connection is established
+asyncio.run(asyncio.sleep(1))
+
+# Send guesses
+for _ in range(5):
+    send_guess()
+    asyncio.run(asyncio.sleep(2))
