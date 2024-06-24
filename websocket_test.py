@@ -1,17 +1,20 @@
-
 import streamlit as st
 import asyncio
-import socketio
+import websockets
+import json
+import ssl
 import requests
 import pandas as pd
+import threading
 
 # WebSocket URL and API settings
 websocket_url = "wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/testgame5"
 api_url = "https://semantlyapi-352e1ba2b5fd.herokuapp.com"
 api_key = "my_semantly_api_password"
 
-# Initialize SocketIO client
-sio = socketio.AsyncClient()
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
 # Initialize Streamlit session state
 if 'guesses' not in st.session_state:
@@ -26,20 +29,14 @@ def fetch_guesses():
     else:
         st.error(f"Error fetching guesses: {response.status_code}")
 
-# SocketIO event handler for receiving new guesses
-@sio.event
-async def connect():
-    print("Connected to the WebSocket server")
-
-@sio.event
-async def new_guess(data):
-    guess_data = data["guess"]
-    st.session_state['guesses'].append(guess_data)
-    st.experimental_rerun()
-
-@sio.event
-async def disconnect():
-    print("Disconnected from the WebSocket server")
+# Function to handle WebSocket messages and trigger data refresh
+async def websocket_handler():
+    async with websockets.connect(websocket_url, ssl=ssl_context) as websocket:
+        while True:
+            message = await websocket.recv()
+            guess_data = json.loads(message)
+            fetch_guesses()  # Refresh the data from the API
+            st.experimental_rerun()
 
 # Function to send a guess via HTTP POST request
 def send_guess():
@@ -51,15 +48,20 @@ def send_guess():
     else:
         st.error(f"Error adding guess: {response.status_code}")
 
-# Function to start the SocketIO client
-async def start_socketio_client():
-    await sio.connect(websocket_url)
-    await sio.wait()
+# Start the WebSocket listener in a separate asyncio loop
+async def start_websocket_listener():
+    await websocket_handler()
 
-# Start the SocketIO client
-if 'sio_running' not in st.session_state:
-    asyncio.run(start_socketio_client())
-    st.session_state['sio_running'] = True
+def run_websocket_listener():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(start_websocket_listener())
+
+# Ensure the WebSocket listener runs in a separate thread
+if 'websocket_thread' not in st.session_state:
+    websocket_thread = threading.Thread(target=run_websocket_listener, daemon=True)
+    websocket_thread.start()
+    st.session_state['websocket_thread'] = websocket_thread
 
 # Streamlit UI
 st.title("Semantly Guessing Game")

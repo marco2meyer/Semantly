@@ -6,8 +6,8 @@ import requests
 import threading
 
 # WebSocket URL and API settings
-#api_url = "http://localhost:8000"
-#websocket_url = "ws://localhost:8000/ws/testgame5"
+api_url = "http://localhost:8000"
+websocket_url = "ws://localhost:8000/ws/testgame5"
 websocket_url = "wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/testgame5"
 api_url = "https://semantlyapi-352e1ba2b5fd.herokuapp.com"
 api_key = "my_semantly_api_password"
