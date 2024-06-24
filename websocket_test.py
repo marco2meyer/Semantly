@@ -1,33 +1,45 @@
+
+import streamlit as st
 import asyncio
-import websockets
-import json
-import ssl
+import socketio
 import requests
-import threading
+import pandas as pd
 
 # WebSocket URL and API settings
 websocket_url = "wss://semantlyapi-352e1ba2b5fd.herokuapp.com/ws/testgame5"
 api_url = "https://semantlyapi-352e1ba2b5fd.herokuapp.com"
 api_key = "my_semantly_api_password"
 
-ssl_context = ssl.create_default_context()
-ssl_context.check_hostname = False
-ssl_context.verify_mode = ssl.CERT_NONE
+# Initialize SocketIO client
+sio = socketio.AsyncClient()
 
-# Function to handle WebSocket communication
-async def websocket_handler():
-    async with websockets.connect(websocket_url, ssl=ssl_context) as websocket:
-        # Authenticate via WebSocket
-        auth_data = {"x-api-key": api_key}
-        await websocket.send(json.dumps(auth_data))
-        print("Sent authentication data")
+# Initialize Streamlit session state
+if 'guesses' not in st.session_state:
+    st.session_state['guesses'] = []
 
-        try:
-            while True:
-                message = await websocket.recv()
-                print(f"Received message: {message}")
-        except websockets.ConnectionClosed:
-            print("WebSocket connection closed")
+# Function to fetch guesses from the API
+def fetch_guesses():
+    headers = {"x-api-key": api_key}
+    response = requests.get(f"{api_url}/game/testgame5/guesses", headers=headers)
+    if response.status_code == 200:
+        st.session_state['guesses'] = response.json()["user_guesses"]
+    else:
+        st.error(f"Error fetching guesses: {response.status_code}")
+
+# SocketIO event handler for receiving new guesses
+@sio.event
+async def connect():
+    print("Connected to the WebSocket server")
+
+@sio.event
+async def new_guess(data):
+    guess_data = data["guess"]
+    st.session_state['guesses'].append(guess_data)
+    st.experimental_rerun()
+
+@sio.event
+async def disconnect():
+    print("Disconnected from the WebSocket server")
 
 # Function to send a guess via HTTP POST request
 def send_guess():
@@ -35,17 +47,28 @@ def send_guess():
     headers = {"x-api-key": api_key}
     response = requests.post(f"{api_url}/game/testgame5/guess", json=guess_data, headers=headers)
     if response.status_code == 200:
-        print("Guess added successfully2")
+        st.success("Guess added successfully")
     else:
-        print(f"Error adding guess: {response.status_code}")
+        st.error(f"Error adding guess: {response.status_code}")
 
-# Run the WebSocket handler in a separate thread
-threading.Thread(target=asyncio.run, args=(websocket_handler(),)).start()
+# Function to start the SocketIO client
+async def start_socketio_client():
+    await sio.connect(websocket_url)
+    await sio.wait()
 
-# Wait a bit to ensure WebSocket connection is established
-asyncio.run(asyncio.sleep(1))
+# Start the SocketIO client
+if 'sio_running' not in st.session_state:
+    asyncio.run(start_socketio_client())
+    st.session_state['sio_running'] = True
 
-# Send guesses
-for _ in range(5):
+# Streamlit UI
+st.title("Semantly Guessing Game")
+
+if st.button("Add Guess"):
     send_guess()
-    asyncio.run(asyncio.sleep(2))
+
+# Fetch guesses and display in table
+fetch_guesses()
+if st.session_state['guesses']:
+    df = pd.DataFrame(st.session_state['guesses'])
+    st.table(df)
