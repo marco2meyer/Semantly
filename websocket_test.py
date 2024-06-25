@@ -35,8 +35,8 @@ async def websocket_handler():
         while True:
             message = await websocket.recv()
             guess_data = json.loads(message)
-            fetch_guesses()  # Refresh the data from the API
-            st.experimental_rerun()
+            #fetch_guesses()  # Refresh the data from the API
+            st.rerun()
 
 # Function to send a guess via HTTP POST request
 def send_guess():
